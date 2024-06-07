@@ -67,9 +67,11 @@ resource "aws_instance" "server_b" {
 
               s3_client = boto3.client('s3', region_name='us-east-1')
               sqs_client = boto3.client('sqs', region_name='us-east-1')
+              session = boto3.Session(profile_name='s3access')
 
               QUEUE_URL = '$(aws_sqs_queue.ServerB.id)'
               BUCKET_NAME = 'sns-sqs-vk'
+              
 
               def process_messages():
                   messages = sqs_client.receive_message(
@@ -161,12 +163,14 @@ resource "aws_iam_role_policy" "ec2_role_policy" {
       },
       {
         Effect   = "Allow",
-        Action   = [
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:List*"
-        ],
+        "Action": "s3:*",
         Resource = "arn:aws:s3:::sns-sqs-vk/*",
+      },
+      {
+            "Sid": "allowaccesstos3",
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::394953618631:role/ec2_publish_to_sns_role"
       },
     ],
   })
